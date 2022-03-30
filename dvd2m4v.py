@@ -26,9 +26,8 @@ def encode(src: Path, dst: Path):
     run(CMD, check=True, capture_output=True, encoding="utf8")
 
 
-if __name__ == "__main__":
-
-    CONFIGFILE = "/etc/dvd2mkv.conf"
+def main():
+    CONFIGFILE = "/etc/dvd2m4v.conf"
 
     parser = ArgumentParser()
     parser.add_argument("--indir", help="Directory containing dvds.", type=Path)
@@ -77,3 +76,7 @@ if __name__ == "__main__":
         sys.stderr.write("Some failed:")
         sys.stderr.write("\n".join("\t->\t".join(str(a) for a in x) for x in failed))
         sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

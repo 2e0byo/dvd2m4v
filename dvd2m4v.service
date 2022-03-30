@@ -3,5 +3,5 @@ Description=Encode DVDs to m4vs.
 Wants=dvd2m4v.timer
 
 [Service]
-ExecStart=/usr/local/bin/dvd2m4v
+ExecStart=dvd2m4v
 TimeoutStartSec=3600
