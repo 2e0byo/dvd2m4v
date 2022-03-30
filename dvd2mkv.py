@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import sys
 from argparse import ArgumentParser
+from configparser import ConfigParser
 from logging import getLogger
 from pathlib import Path
 from subprocess import run
@@ -27,8 +28,10 @@ def encode(src: Path, dst: Path):
 
 if __name__ == "__main__":
 
+    CONFIGFILE = "/etc/dvd2mkv.conf"
+
     parser = ArgumentParser()
-    parser.add_argument("INDIR", help="Directory containing dvds.", type=Path)
+    parser.add_argument("--indir", help="Directory containing dvds.", type=Path)
     parser.add_argument(
         "--outdir", help="Directory to save m4vs if different from INDIR.", type=Path
     )
@@ -37,14 +40,20 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    if args.dry_run:
-        coloredlogs.set_level("DEBUG")
+    configparser = ConfigParser()
+    configparser.read(CONFIGFILE)
+    config = dict(configparser["dvd2m4v"]) if configparser.sections() else {}
 
-    VIDEOS = args.INDIR.expanduser()
-    OUTDIR = (args.outdir or VIDEOS).expanduser()
+    config |= {k: v for k, v in vars(args).items() if v is not None}
+
+    VIDEOS = Path(config["indir"]).expanduser()
+    OUTDIR = Path(config.get("outdir", VIDEOS)).expanduser()
 
     process = list(VIDEOS.glob("*.iso"))
     process += [x for x in VIDEOS.glob("*") if x.is_dir() and (x / "VIDEO_TS").is_dir()]
+
+    if config["dry_run"]:
+        coloredlogs.set_level("DEBUG")
 
     # we search this way around as sometimes we have manually split the dvd up,
     # e.g. by episode, and we want to catch this and avoid re-encoding.
@@ -58,7 +67,7 @@ if __name__ == "__main__":
         else:
             encoded = OUTDIR / (video.stem + ".m4v")
             logger.info(f"Encoding {video} to {encoded}.")
-            if not args.dry_run:
+            if not config["dry_run"]:
                 try:
                     encode(video, encoded)
                 except Exception as e:
